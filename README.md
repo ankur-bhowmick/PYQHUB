@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 📚 University Previous Year Question Papers Portal (PYQ Portal)
 
 A full-stack web application where students and teachers can browse, filter, and download university question papers. Admins can manage universities, papers, users, contacts, and ratings.
@@ -262,3 +263,7 @@ Base URL: `http://localhost:5000/api`
 - Passwords are **hashed** using bcrypt before being stored.
 - JWT tokens are sent in the `Authorization: Bearer <token>` header.
 - The admin seed only runs if **no admin user** exists in the database.
+=======
+# PYQHUB
+This platform is built with one simple goal — to make previous year question papers easily accessible to every student, completely free of cost, with no ads or distractions.
+>>>>>>> ae01fdf5382f2ccf8b487e723c17cc0a006fd076
