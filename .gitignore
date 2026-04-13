@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Uploads (PDFs are user-uploaded, don't push to git)
+backend/uploads/*.pdf
+
+# Frontend build will be built on Render via build script
+frontend/dist/
+
+# Lock files at root (use backend and frontend ones)
+package-lock.json

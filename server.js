@@ -2,11 +2,12 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
-const connectDB = require('./config/db');
-const seedAdmin = require('./utils/seedAdmin');
+const connectDB = require('./backend/config/db');
+const seedAdmin = require('./backend/utils/seedAdmin');
 
-// Load env
-dotenv.config();
+// Load env from backend folder (for local dev)
+// On Render, env vars are set via the dashboard
+dotenv.config({ path: path.join(__dirname, 'backend', '.env') });
 
 // Connect to DB
 connectDB().then(() => {
@@ -20,19 +21,23 @@ app.use(cors());
 app.use(express.json());
 
 // Serve uploaded PDFs
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'backend', 'uploads')));
 
-// Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/universities', require('./routes/universities'));
-app.use('/api/papers', require('./routes/papers'));
-app.use('/api/ratings', require('./routes/ratings'));
-app.use('/api/contacts', require('./routes/contacts'));
-app.use('/api/bookmarks', require('./routes/bookmarks'));
+// API Routes
+app.use('/api/auth', require('./backend/routes/auth'));
+app.use('/api/universities', require('./backend/routes/universities'));
+app.use('/api/papers', require('./backend/routes/papers'));
+app.use('/api/ratings', require('./backend/routes/ratings'));
+app.use('/api/contacts', require('./backend/routes/contacts'));
+app.use('/api/bookmarks', require('./backend/routes/bookmarks'));
 
-// Health check
-app.get('/', (req, res) => {
-    res.json({ message: 'University Papers API is running' });
+// Serve frontend in production
+const frontendDist = path.join(__dirname, 'frontend', 'dist');
+app.use(express.static(frontendDist));
+
+// All non-API routes serve the React app (for client-side routing)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendDist, 'index.html'));
 });
 
 // Error handler

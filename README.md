@@ -1,7 +1,8 @@
-<<<<<<< HEAD
-# 📚 University Previous Year Question Papers Portal (PYQ Portal)
+# 📚 PYQHUB — University Previous Year Question Papers Portal
 
 A full-stack web application where students and teachers can browse, filter, and download university question papers. Admins can manage universities, papers, users, contacts, and ratings.
+
+This platform is built with one simple goal — to make previous year question papers easily accessible to every student, completely free of cost, with no ads or distractions.
 
 ---
 
@@ -12,7 +13,8 @@ A full-stack web application where students and teachers can browse, filter, and
 | Frontend   | React 18, Vite, React Router v6, Axios  |
 | Backend    | Node.js, Express.js                     |
 | Database   | MongoDB (via Mongoose)                  |
-| Auth       | JWT (JSON Web Tokens), bcrypt           |
+| Auth       | JWT (JSON Web Tokens), bcryptjs         |
+| File Upload| Multer (PDF, max 20MB)                  |
 
 ---
 
@@ -22,17 +24,20 @@ A full-stack web application where students and teachers can browse, filter, and
 university-papers/
 ├── backend/
 │   ├── config/
-│   │   └── db.js               # MongoDB connection
+│   │   ├── db.js               # MongoDB connection
+│   │   └── upload.js           # Multer config for PDF uploads
 │   ├── controllers/
-│   │   ├── authController.js    # Register, Login, Users
-│   │   ├── contactController.js # Contact form CRUD
-│   │   ├── paperController.js   # Paper CRUD + stats
-│   │   ├── ratingController.js  # Ratings CRUD
-│   │   └── universityController.js # University CRUD
+│   │   ├── authController.js
+│   │   ├── bookmarkController.js
+│   │   ├── contactController.js
+│   │   ├── paperController.js
+│   │   ├── ratingController.js
+│   │   └── universityController.js
 │   ├── middleware/
 │   │   ├── auth.js              # JWT verification
 │   │   └── roleCheck.js         # Role-based access
 │   ├── models/
+│   │   ├── Bookmark.js
 │   │   ├── Contact.js
 │   │   ├── Paper.js
 │   │   ├── Rating.js
@@ -40,44 +45,53 @@ university-papers/
 │   │   └── User.js
 │   ├── routes/
 │   │   ├── auth.js
+│   │   ├── bookmarks.js
 │   │   ├── contacts.js
 │   │   ├── papers.js
 │   │   ├── ratings.js
 │   │   └── universities.js
+│   ├── uploads/                 # Uploaded PDF files
 │   ├── utils/
 │   │   └── seedAdmin.js         # Auto-creates default admin
 │   ├── .env                     # Environment variables
 │   ├── package.json
-│   └── server.js                # Entry point
+│   └── server.js                # Backend entry point
 │
-└── frontend/
-    ├── src/
-    │   ├── components/
-    │   │   └── Navbar.jsx
-    │   ├── context/
-    │   │   └── AuthContext.jsx
-    │   ├── pages/
-    │   │   ├── AdminDashboard.jsx
-    │   │   ├── AdminPapers.jsx
-    │   │   ├── AdminUniversities.jsx
-    │   │   ├── ContactPage.jsx
-    │   │   ├── Home.jsx
-    │   │   ├── Login.jsx
-    │   │   ├── RatingsPage.jsx
-    │   │   ├── Register.jsx
-    │   │   └── UniversityPapers.jsx
-    │   ├── utils/
-    │   ├── App.jsx
-    │   ├── index.css
-    │   └── main.jsx
-    ├── index.html
-    ├── package.json
-    └── vite.config.js
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Navbar.jsx
+│   │   │   └── Footer.jsx
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx
+│   │   ├── pages/
+│   │   │   ├── AdminDashboard.jsx
+│   │   │   ├── AdminPapers.jsx
+│   │   │   ├── AdminUniversities.jsx
+│   │   │   ├── ContactPage.jsx
+│   │   │   ├── Home.jsx
+│   │   │   ├── Login.jsx
+│   │   │   ├── Profile.jsx
+│   │   │   ├── RatingsPage.jsx
+│   │   │   ├── Register.jsx
+│   │   │   └── UniversityPapers.jsx
+│   │   ├── utils/
+│   │   │   └── api.js
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── main.jsx
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.js
+│
+├── server.js                    # Root entry point (for hosting)
+├── package.json
+└── README.md
 ```
 
 ---
 
-## 🚀 How to Run
+## 🚀 How to Run Locally
 
 ### Prerequisites
 
@@ -146,7 +160,7 @@ A default **admin** account is auto-seeded on first startup:
 
 | Role      | Permissions                                                  |
 | --------- | ------------------------------------------------------------ |
-| `student` | Browse universities & papers, submit ratings, contact support |
+| `student` | Browse universities & papers, bookmark, submit ratings, contact support |
 | `teacher` | Same as student                                               |
 | `admin`   | Full access — manage universities, papers, users, contacts, ratings |
 
@@ -165,6 +179,7 @@ Base URL: `http://localhost:5000/api`
 | POST   | `/register`  | ❌    | —     | Register new user    |
 | POST   | `/login`     | ❌    | —     | Login & get JWT      |
 | GET    | `/me`        | ✅    | Any   | Get current user     |
+| PUT    | `/profile`   | ✅    | Any   | Update profile       |
 | GET    | `/users`     | ✅    | Admin | List all users       |
 
 ### Universities (`/api/universities`)
@@ -181,12 +196,25 @@ Base URL: `http://localhost:5000/api`
 
 | Method | Endpoint                   | Auth  | Role  | Description              |
 | ------ | -------------------------- | ----- | ----- | ------------------------ |
+| GET    | `/search`                  | ❌    | —     | Global search            |
+| GET    | `/recent`                  | ❌    | —     | Recently added papers    |
 | GET    | `/university/:universityId`| ❌    | —     | Papers by university     |
+| GET    | `/view/:filename`          | ❌    | —     | Serve PDF file           |
+| POST   | `/download/:id`            | ❌    | —     | Increment download count |
 | GET    | `/all`                     | ✅    | Admin | All papers               |
 | GET    | `/stats`                   | ✅    | Admin | Dashboard stats          |
-| POST   | `/`                        | ✅    | Admin | Create paper             |
+| POST   | `/`                        | ✅    | Admin | Upload paper (PDF)       |
 | PUT    | `/:id`                     | ✅    | Admin | Update paper             |
 | DELETE | `/:id`                     | ✅    | Admin | Delete paper             |
+
+### Bookmarks (`/api/bookmarks`)
+
+| Method | Endpoint          | Auth  | Role  | Description              |
+| ------ | ----------------- | ----- | ----- | ------------------------ |
+| GET    | `/`               | ✅    | Any   | Get user's bookmarks     |
+| GET    | `/ids`            | ✅    | Any   | Get bookmark IDs         |
+| GET    | `/check/:paperId` | ✅    | Any   | Check if bookmarked      |
+| POST   | `/toggle`         | ✅    | Any   | Toggle bookmark          |
 
 ### Ratings (`/api/ratings`)
 
@@ -207,65 +235,11 @@ Base URL: `http://localhost:5000/api`
 
 ---
 
-## 🗂️ Database Models
-
-### User
-- `name` (String, letters & spaces only)
-- `email` (String, unique)
-- `password` (String, min 6 chars, hashed with bcrypt)
-- `role` (student | teacher | admin)
-
-### University
-- `name` (String, unique)
-- `location` (String)
-- `description` (String, optional)
-
-### Paper
-- `universityId` (Reference to University)
-- `subject` (String)
-- `year` (Number)
-- `semester` (String, optional)
-- `examType` (Mid-Term | End-Term | Supplementary | Other)
-- `paperUrl` (String — link/URL to the paper)
-
-### Rating
-- `userId` (Reference to User, one rating per user)
-- `rating` (Number, 1–5)
-- `review` (String, optional)
-
-### Contact
-- `userId` (Reference to User)
-- `subject` (String)
-- `message` (String)
-- `status` (pending | resolved)
-
----
-
-## 📄 Frontend Routes
-
-| Path                   | Page                | Access          |
-| ---------------------- | ------------------- | --------------- |
-| `/`                    | Home                | Public          |
-| `/login`               | Login               | Public          |
-| `/register`            | Register            | Public          |
-| `/university/:id`      | University Papers   | Public          |
-| `/ratings`             | Ratings             | Public          |
-| `/contact`             | Contact Form        | Logged-in users |
-| `/admin/dashboard`     | Admin Dashboard     | Admin only      |
-| `/admin/universities`  | Manage Universities | Admin only      |
-| `/admin/papers`        | Manage Papers       | Admin only      |
-
----
-
 ## ⚙️ Additional Notes
 
-- The Vite dev server **proxies** all `/api` requests to `http://localhost:5000` (configured in `vite.config.js`), so both servers need to be running.
-- Passwords are **hashed** using bcrypt before being stored.
+- The Vite dev server **proxies** all `/api` requests to `http://localhost:5000` (configured in `vite.config.js`), so both servers need to be running for local development.
+- Passwords are **hashed** using bcryptjs before being stored.
 - JWT tokens are sent in the `Authorization: Bearer <token>` header.
 - The admin seed only runs if **no admin user** exists in the database.
-=======
-# PYQHUB
-This platform is built with one simple goal — to make previous year question papers easily accessible to every student, completely free of cost, with no ads or distractions.
->>>>>>> ae01fdf5382f2ccf8b487e723c17cc0a006fd076
-#   p y q h u b - f r o n t e n d  
- 
+- Papers are uploaded as PDF files (max 20MB) and stored in `backend/uploads/`.
+- Papers support Theory/Practical types, Major/Minor categories, and syllabus types.
